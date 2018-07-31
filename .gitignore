@@ -1,0 +1,6 @@
+__pycache__/
+.ipynb_checkpoints/
+.idea/
+
+# dunno if this file should be ignored
+data.txt
