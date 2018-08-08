@@ -27,6 +27,7 @@ class Actor:
     def build_model(self):
         """Build an actor (policy) network that maps states -> actions."""
         # Define input layer (states)
+        print('creating input layer with shape = {}'.format(self.state_size))
         states = layers.Input(shape=(self.state_size,), name='states')
 
         # Add hidden layers

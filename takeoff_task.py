@@ -29,7 +29,26 @@ class TakeoffTask():
     def get_reward(self):
         # TODO: make custom reward function
         """Uses current pose of sim to return reward."""
-        reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
+        #reward = 1.-.3*(abs(self.sim.pose[:3] - self.target_pos)).sum()
+        
+        # we need to punish moving in either x or y since we're interested in just gaining some altitude
+        x_punish = abs(self.sim.pose[0] - self.target_pos[0])
+        y_punish = abs(self.sim.pose[1] - self.target_pos[1])
+
+        # give reward bigger the closer to target
+        altitude_reward = ()
+
+        #punish_x = abs(self.sim.pose[0] - self.target_pos[0])
+        #punish_y = abs(self.sim.pose[1] - self.target_pos[1])
+        #reward_z = 1.0 - (self.target_pos[2] - self.sim.pose[2])
+        reward_z = 1 / (abs(self.target_pos[2] - self.sim.pose[2]) + 1)
+        punish_rot1 = abs(self.sim.pose[3])
+        punish_rot2 = abs(self.sim.pose[4])
+        punish_rot3 = abs(self.sim.pose[5])
+        #reward_vz = self.sim.v[2]
+        reward_tf = self.sim.time
+        reward = reward_z + 0.1 * reward_tf - 0.1 * (punish_x + punish_y) - 0.1 * (punish_rot1 + punish_rot2 + punish_rot3) 
+
         return reward
 
 
