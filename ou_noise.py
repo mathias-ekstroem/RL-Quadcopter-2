@@ -1,5 +1,7 @@
-import numpy as np
 import copy
+
+import numpy as np
+
 
 class OUNoise:
     """Ornstein-Uhlenbeck process."""

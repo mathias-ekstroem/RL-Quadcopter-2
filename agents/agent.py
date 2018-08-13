@@ -1,12 +1,12 @@
 import numpy as np
 
-from actor_critic.keras_actor import Actor
-from actor_critic.keras_critic import Critic
-
-from replay_buffer import ReplayBuffer
+from agents.actor import Actor
+from agents.critic import Critic
 from ou_noise import OUNoise
+from replay_buffer import ReplayBuffer
 
-class DDPG():
+
+class DDPG:
     """Reinforcement Learning agent that learns using DDPG."""
     def __init__(self, task):
         self.task = task

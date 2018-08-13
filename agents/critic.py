@@ -1,5 +1,6 @@
-from keras import layers, models, optimizers
 from keras import backend as K
+from keras import layers, models, optimizers
+
 
 class Critic:
     """Critic (Value) Model."""
@@ -26,12 +27,20 @@ class Critic:
         actions = layers.Input(shape=(self.action_size,), name='actions')
 
         # Add hidden layer(s) for state pathway
-        net_states = layers.Dense(units=32, activation='relu')(states)
-        net_states = layers.Dense(units=64, activation='relu')(net_states)
+        net_states = layers.Dense(units=128)(states)
+        net_states = layers.BatchNormalization()(net_states)
+        net_states = layers.LeakyReLU()(net_states)
+        net_states = layers.Dense(units=256,)(net_states)
+        net_states = layers.BatchNormalization()(net_states)
+        net_states = layers.LeakyReLU()(net_states)
 
         # Add hidden layer(s) for action pathway
-        net_actions = layers.Dense(units=32, activation='relu')(actions)
-        net_actions = layers.Dense(units=64, activation='relu')(net_actions)
+        net_actions = layers.Dense(units=128)(actions)
+        net_actions = layers.BatchNormalization()(net_actions)
+        net_actions = layers.LeakyReLU()(net_actions)
+        net_actions = layers.Dense(units=256)(net_actions)
+        net_actions = layers.BatchNormalization()(net_actions)
+        net_actions = layers.LeakyReLU()(net_actions)
 
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
 
@@ -48,7 +57,7 @@ class Critic:
         self.model = models.Model(inputs=[states, actions], outputs=Q_values)
 
         # Define optimizer and compile model for training with built-in loss function
-        optimizer = optimizers.Adam()
+        optimizer = optimizers.Adam(lr=0.00003)
         self.model.compile(optimizer=optimizer, loss='mse')
 
         # Compute action gradients (derivative of Q values w.r.t. to actions)
