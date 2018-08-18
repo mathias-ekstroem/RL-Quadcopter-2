@@ -29,14 +29,7 @@ class TakeoffTask:
         # Goal
         self.target_pos = target_pos if target_pos is not None else np.array([0., 0., 10.])
 
-    def get_reward_linalg(self):
-        distance_to_target = np.linalg.norm(self.target_pos - self.sim.pose[:3])
-        sum_acceleration = np.linalg.norm(self.sim.linear_accel)
-
-        reward = (5. - distance_to_target) * 0.3 - sum_acceleration * 0.05
-
-        return reward
-
+    # this one gave pretty good results
     def get_reward_ed(self):
         """Uses current pose of sim to return reward."""
         max_reward = 1
@@ -51,32 +44,37 @@ class TakeoffTask:
         reward = np.maximum(np.minimum(reward, max_reward), min_reward)
         return reward
 
-    def get_reward(self):
-        """Uses current pose of sim to return reward."""
+    def my_get_reward(self):
+        # clip the rewards
+        min_reward = -1
+        max_reward = 1
 
-        # we need to punish moving in either x or y since we're interested in just gaining some altitude
-        x_punish = abs(self.sim.pose[0] - self.target_pos[0])
-        y_punish = abs(self.sim.pose[1] - self.target_pos[1])
+        # punish movement on the x-axis
+        xy_punish_factor = -0.1
+        x_punish = xy_punish_factor * abs(self.target_pos[0] - self.sim.pose[0])
+        y_punish = xy_punish_factor * abs(self.target_pos[1] - self.sim.pose[1])
 
-        # give reward bigger the closer to target
-        altitude_reward = 1 / (abs(self.target_pos[2] - self.sim.pose[2]) + 1)
+        rotation_punish_factor = -0.01
+        rot_1_punish = rotation_punish_factor * abs(self.sim.pose[3])
+        rot_2_punish = rotation_punish_factor * abs(self.sim.pose[4])
+        rot_3_punish = rotation_punish_factor * abs(self.sim.pose[5])
 
-        # reward_z = 1.0 - (self.target_pos[2] - self.sim.pose[2])
-        # reward_z = 1 / (abs(self.target_pos[2] - self.sim.pose[2]) + 1)
-        punish_rot1 = abs(self.sim.pose[3])
-        punish_rot2 = abs(self.sim.pose[4])
-        punish_rot3 = abs(self.sim.pose[5])
-        # reward_vz = self.sim.v[2]
-        reward_tf = self.sim.time
-        # reward = reward_z + 0.1 * reward_tf - 0.1 * (punish_x + punish_y) - 0.1 * (
-        #             punish_rot1 + punish_rot2 + punish_rot3)
+        rotation_punish = sum([rot_1_punish, rot_2_punish, rot_3_punish])
 
-        reward = 2 * altitude_reward - 0.01 * (x_punish + y_punish) + 0.1 * self.sim.time - 0.1 * (
-                punish_rot1 + punish_rot2 + punish_rot3)
+        target_reward_factor = 0.1
+        reward_dist_to_target = target_reward_factor * abs(self.target_pos[2] - self.sim.pose[2])
 
-        if self.target_pos[2] == self.sim.pose[2]:
-            print('giving the ultimate reward')
-            reward = 100
+        # get reward for staying in the air and continuing the simulation
+        time_reward_factor = 0.1
+        time_reward = time_reward_factor * self.sim.time
+
+        reward = sum([x_punish, y_punish, rotation_punish, reward_dist_to_target, time_reward])
+
+        # make sure that the rewards are being clipped
+        if reward > max_reward:
+            return max_reward
+        elif reward < min_reward:
+            return min_reward
 
         return reward
 
@@ -86,7 +84,7 @@ class TakeoffTask:
         pose_all = []
         for _ in range(self.action_repeat):
             done = self.sim.next_timestep(rotor_speeds)  # update the sim pose and velocities
-            reward += self.get_reward_ed()
+            reward += self.my_get_reward()
             pose_all.append(self.sim.pose)
         next_state = np.concatenate(pose_all)
         return next_state, reward, done
