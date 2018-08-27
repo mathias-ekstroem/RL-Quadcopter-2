@@ -29,22 +29,21 @@ class Actor:
         """Build an actor (policy) network that maps states -> actions."""
         # Define input layer (states)
         print('creating input layer with shape = {}'.format(self.state_size))
+        print('building new version of actor model')
         states = layers.Input(shape=(self.state_size,), name='states')
 
         # Add hidden layers
-        net = layers.Dense(units=64)(states)
-        net = layers.BatchNormalization()(net)
-        net = layers.LeakyReLU()(net)
-        net = layers.Dense(units=128)(net)
-        net = layers.BatchNormalization()(net)
-        net = layers.LeakyReLU()(net)
-        net = layers.Dense(units=256)(net)
-        net = layers.LeakyReLU()(net)
+        net = layers.Dense(units=400, activation='relu')(states)
+        net = layers.Dense(units=300, activation='relu')(net)
 
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
 
         # Add final output layer with sigmoid activation
-        raw_actions = layers.Dense(units=self.action_size, activation='sigmoid',
+        #raw_actions = layers.Dense(units=self.action_size, activation='sigmoid',
+         #                          name='raw_actions')(net)
+
+
+        raw_actions = layers.Dense(units=self.action_size, activation='tanh',
                                    name='raw_actions')(net)
 
         # Scale [0, 1] output for each action dimension to proper range
@@ -62,7 +61,7 @@ class Actor:
         # Incorporate any additional losses here (e.g. from regularizers)
 
         # Define optimizer and training function
-        optimizer = optimizers.Adam(lr=0.0002)
+        optimizer = optimizers.Adam(lr=0.0001)  # same learn rate as in DDPG paper
         updates_op = optimizer.get_updates(params=self.model.trainable_weights, loss=loss)
         self.train_fn = K.function(
             inputs=[self.model.input, action_gradients, K.learning_phase()],
