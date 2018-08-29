@@ -33,8 +33,10 @@ class Actor:
         states = layers.Input(shape=(self.state_size,), name='states')
 
         # Add hidden layers
-        net = layers.Dense(units=400, activation='relu')(states)
-        net = layers.Dense(units=300, activation='relu')(net)
+        net = layers.Dense(units=400)(states)
+        net = layers.LeakyReLU()(net)
+        net = layers.Dense(units=300)(net)
+        net = layers.LeakyReLU()(net)
 
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
 
@@ -44,6 +46,7 @@ class Actor:
 
         raw_actions = layers.Dense(units=self.action_size, activation='tanh',
                                    name='raw_actions')(net)
+        print('doing the tanh now')
 
         # Scale [0, 1] output for each action dimension to proper range
         actions = layers.Lambda(lambda x: (x * self.action_range) + self.action_low,

@@ -41,7 +41,7 @@ class DDPG:
         # Algorithm parameters
         self.gamma = 0.99  # discount factor
         #self.tau = 0.01  # for soft update of target parameters
-        self.tau = 0.001
+        self.tau = 0.01
 
     def reset_episode(self):
         self.noise.reset()
