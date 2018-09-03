@@ -1,5 +1,6 @@
 from keras import backend as K
 from keras import layers, models, optimizers
+# from keras.layers import
 
 
 class Critic:
@@ -53,8 +54,8 @@ class Critic:
         self.model = models.Model(inputs=[states, actions], outputs=Q_values)
 
         # Define optimizer and compile model for training with built-in loss function
-        optimizer = optimizers.Adam(lr=0.001)  # same lr as in DDPG paper
-        # optimizer = optimizers.Adam()
+        # optimizer = optimizers.Adam(lr=0.001)  # same lr as in DDPG paper
+        optimizer = optimizers.Adam()
         self.model.compile(optimizer=optimizer, loss='mse')
 
         # Compute action gradients (derivative of Q values w.r.t. to actions)

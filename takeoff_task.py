@@ -49,10 +49,11 @@ class TakeoffTask:
         min_reward = -1
         max_reward = 1
 
+        # right now this is handled by the distance to target variable
         # punish movement on the x-axis
-        xy_punish_factor = -0.1
-        x_punish = xy_punish_factor * abs(self.target_pos[0] - self.sim.pose[0])
-        y_punish = xy_punish_factor * abs(self.target_pos[1] - self.sim.pose[1])
+        xy_punish_factor = -0.01
+        # x_punish = xy_punish_factor * abs(self.target_pos[0] - self.sim.pose[0])
+        # y_punish = xy_punish_factor * abs(self.target_pos[1] - self.sim.pose[1])
 
         rotation_punish_factor = -0.1
         rot_1_punish = rotation_punish_factor * abs(self.sim.pose[3])
@@ -61,14 +62,25 @@ class TakeoffTask:
 
         rotation_punish = sum([rot_1_punish, rot_2_punish, rot_3_punish])
 
-        target_reward_factor = 2
-        reward_dist_to_target = target_reward_factor * (1 / (abs(self.target_pos[2] - self.sim.pose[2]) + 1))
-
+        target_reward_factor = 0.8
+        # try and change this function. The target does not only have to be on the z axis. We can just measure the
+        # distance the target pose as a hole and give reward from that.
+        # reward_dist_to_target = target_reward_factor * (1 / (abs(self.target_pos[2] - self.sim.pose[2]) + 1))
+        reward_dist_to_target = target_reward_factor * (1 / (abs(self.target_pos - self.sim.pose[:3]) + 1)).sum()
         # get reward for staying in the air and continuing the simulation
-        time_reward_factor = 0.1
-        time_reward = time_reward_factor * self.sim.time
+        # time_reward_factor = 0.1
+        # time_reward = time_reward_factor * self.sim.time
 
-        reward = sum([x_punish, y_punish, rotation_punish, reward_dist_to_target, time_reward])
+        # velocity punishment
+        angular_v_punish_factor = -0.002
+        angular_velocity_punish = angular_v_punish_factor * (abs(self.sim.angular_v)).sum()
+
+        # punish high velocity
+        velocity_punish_factor = -0.005
+        velocity_punish = velocity_punish_factor * self.sim.v.sum()
+
+        # reward = sum([x_punish, y_punish, rotation_punish, reward_dist_to_target])
+        reward = sum([rotation_punish, reward_dist_to_target, angular_velocity_punish, velocity_punish])
 
         # make sure that the rewards are being clipped
         if reward > max_reward:
@@ -84,7 +96,7 @@ class TakeoffTask:
         pose_all = []
         for _ in range(self.action_repeat):
             done = self.sim.next_timestep(rotor_speeds)  # update the sim pose and velocities
-            reward += self.get_reward_ed()
+            reward += self.my_get_reward()
             pose_all.append(self.sim.pose)
         next_state = np.concatenate(pose_all)
         return next_state, reward, done

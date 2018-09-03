@@ -1,14 +1,11 @@
 import numpy as np
-
-from agents.actor import Actor
-from agents.critic import Critic
-from ou_noise import OUNoise
 from replay_buffer import ReplayBuffer
+from orig_agents.actor import Actor
+from orig_agents.critic import Critic
+from ou_noise import OUNoise
 
-
-class DDPG:
+class DDPG():
     """Reinforcement Learning agent that learns using DDPG."""
-
     def __init__(self, task):
         self.task = task
         self.state_size = task.state_size
@@ -41,7 +38,7 @@ class DDPG:
 
         # Algorithm parameters
         self.gamma = 0.99  # discount factor
-        self.tau = 0.001  # for soft update of target parameters
+        self.tau = 0.01  # for soft update of target parameters
 
     def reset_episode(self):
         self.noise.reset()
@@ -50,7 +47,7 @@ class DDPG:
         return state
 
     def step(self, action, reward, next_state, done):
-        # Save experience / reward
+         # Save experience / reward
         self.memory.add(self.last_state, action, reward, next_state, done)
 
         # Learn, if enough samples are available in memory
@@ -71,14 +68,13 @@ class DDPG:
         """Update policy and value parameters using given batch of experience tuples."""
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         states = np.vstack([e.state for e in experiences if e is not None])
-        actions = np.array([e.action for e in experiences if e is not None]).astype(np.float32).reshape(-1,
-                                                                                                        self.action_size)
+        actions = np.array([e.action for e in experiences if e is not None]).astype(np.float32).reshape(-1, self.action_size)
         rewards = np.array([e.reward for e in experiences if e is not None]).astype(np.float32).reshape(-1, 1)
         dones = np.array([e.done for e in experiences if e is not None]).astype(np.uint8).reshape(-1, 1)
         next_states = np.vstack([e.next_state for e in experiences if e is not None])
 
         # Get predicted next-state actions and Q values from target models
-        # Q_targets_next = critic_target(next_state, actor_target(next_state))
+        #     Q_targets_next = critic_target(next_state, actor_target(next_state))
         actions_next = self.actor_target.model.predict_on_batch(next_states)
         Q_targets_next = self.critic_target.model.predict_on_batch([next_states, actions_next])
 
@@ -87,8 +83,7 @@ class DDPG:
         self.critic_local.model.train_on_batch(x=[states, actions], y=Q_targets)
 
         # Train actor model (local)
-        action_gradients = np.reshape(self.critic_local.get_action_gradients([states, actions, 0]),
-                                      (-1, self.action_size))
+        action_gradients = np.reshape(self.critic_local.get_action_gradients([states, actions, 0]), (-1, self.action_size))
         self.actor_local.train_fn([states, action_gradients, 1])  # custom training function
 
         # Soft-update target models
