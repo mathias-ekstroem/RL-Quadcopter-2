@@ -35,10 +35,9 @@ class TakeoffTask:
         max_reward = 1
         min_reward = -1
 
-        ed = (abs(self.sim.pose[:3] - self.target_pos)).sum()  # euclidian distance
-        avd = (abs(self.sim.angular_v)).sum()  # angular v
-        vd = (abs(self.sim.v)).sum()  # velocity
-
+        ed = (abs(self.sim.pose[:3] - self.target_pos)).sum()
+        avd = (abs(self.sim.angular_v)).sum()
+        vd = (abs(self.sim.v)).sum()
         reward = 1. - ed / 519. - avd / 20. - vd / 6000.
 
         reward = np.maximum(np.minimum(reward, max_reward), min_reward)
@@ -96,7 +95,7 @@ class TakeoffTask:
         pose_all = []
         for _ in range(self.action_repeat):
             done = self.sim.next_timestep(rotor_speeds)  # update the sim pose and velocities
-            reward += self.my_get_reward()
+            reward += self.get_reward_ed()
             pose_all.append(self.sim.pose)
         next_state = np.concatenate(pose_all)
         return next_state, reward, done
